@@ -11,10 +11,12 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QGraphicsScene,
     QErrorMessage,
+    QMessageBox,
 )
 from PyQt5.QtGui import QPixmap, QImage
 from matplotlib import pyplot as plt
 from functools import wraps, partial
+from ults.face_detector import face_detector
 
 from PIL import Image
 
@@ -54,17 +56,20 @@ class ImageEditor(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        self.setWindowTitle("PyImgEdit - 19IT1")
 
         self.set_slider_enabled(False)
 
         # Connect signals to slots
         # Page 1
         self.open_button.clicked.connect(self.open_image)
+        self.save_button.clicked.connect(self.save_image)
         self.histogram_equal_button.clicked.connect(self.histogram_equalization)
         self.view_histogram_button.clicked.connect(self.view_histogram)
         self.invert_image_button.clicked.connect(self.invert_image)
         self.log_transform_button.clicked.connect(self.log_transform)
         self.gamma_transform_button.clicked.connect(self.gamma_transform)
+        self.find_edge_button.clicked.connect(self.edge_detector)
 
         # Page 1 slider
         self.blur_slider.valueChanged.connect(self.blur_image)
@@ -88,6 +93,8 @@ class ImageEditor(QMainWindow, Ui_MainWindow):
             partial(self.transpose_image, Image.Transpose.ROTATE_270)
         )
 
+        self.pushButton.clicked.connect(self.face_detect)
+
         # Page 3 - Filter
         self.pink_dream_filter_button.clicked.connect(self.apply_pink_dream)
         self.cyperpunk_filter_button.clicked.connect(self.apply_cyperpunk)
@@ -104,6 +111,9 @@ class ImageEditor(QMainWindow, Ui_MainWindow):
         self.prev_page_button.clicked.connect(self.to_prev_page)
         self.undo_button.clicked.connect(self.undo_action)
         self.original_image_button.clicked.connect(self.undo_to_original)
+
+        # Toolbar
+        self.actionAbout_us.triggered.connect(self.show_author_info)
 
     def show_image_info_status_bar(self):
         info = ImageOperation.get_information(self.original_image)
@@ -140,6 +150,16 @@ class ImageEditor(QMainWindow, Ui_MainWindow):
 
         else:
             pass
+
+    @is_image_loaded
+    def save_image(self, *args, **kwargs):
+        fname, filter = QFileDialog.getSaveFileName(
+            self, "Save File", "Image Files (*.png)"
+        )
+        if fname:
+            self.current_image.save(fname)
+        else:
+            print("Error")
 
     def display_image(self):
         """
@@ -363,6 +383,21 @@ class ImageEditor(QMainWindow, Ui_MainWindow):
         )
         self.display_image()
 
+    @pyqtSlot()
+    @is_image_loaded
+    def face_detect(self):
+        self.set_previous_image()
+        self.current_image = face_detector(self.current_image)
+        self.display_image()
+
+    @pyqtSlot()
+    @is_image_loaded
+    def edge_detector(self):
+        self.set_previous_image()
+        # self.current_image = ImageOperation.edge_detector(self.current_image)
+        self.current_image = ImageOperation.edge_detector_pillow(self.current_image)
+        self.display_image()
+
     """
     Filter
     """
@@ -389,45 +424,35 @@ class ImageEditor(QMainWindow, Ui_MainWindow):
     @is_image_loaded
     def apply_snowy(self):
         self.set_previous_image()
-        self.current_image = Image.fromarray(
-            EffectFilter.snowy(self.current_image)
-        )
+        self.current_image = Image.fromarray(EffectFilter.snowy(self.current_image))
         self.display_image()
 
     @pyqtSlot()
     @is_image_loaded
     def apply_pastel(self):
         self.set_previous_image()
-        self.current_image = Image.fromarray(
-            EffectFilter.pastel(self.current_image)
-        )
+        self.current_image = Image.fromarray(EffectFilter.pastel(self.current_image))
         self.display_image()
 
     @pyqtSlot()
     @is_image_loaded
     def apply_firestorm(self):
         self.set_previous_image()
-        self.current_image = Image.fromarray(
-            EffectFilter.firestorm(self.current_image)
-        )
+        self.current_image = Image.fromarray(EffectFilter.firestorm(self.current_image))
         self.display_image()
 
     @pyqtSlot()
     @is_image_loaded
     def apply_ice(self):
         self.set_previous_image()
-        self.current_image = Image.fromarray(
-            EffectFilter.ice(self.current_image)
-        )
+        self.current_image = Image.fromarray(EffectFilter.ice(self.current_image))
         self.display_image()
 
     @pyqtSlot()
     @is_image_loaded
     def apply_darkness(self):
         self.set_previous_image()
-        self.current_image = Image.fromarray(
-            EffectFilter.darkness(self.current_image)
-        )
+        self.current_image = Image.fromarray(EffectFilter.darkness(self.current_image))
         self.display_image()
 
     @pyqtSlot()
@@ -452,9 +477,7 @@ class ImageEditor(QMainWindow, Ui_MainWindow):
     @is_image_loaded
     def apply_cartoon(self):
         self.set_previous_image()
-        self.current_image = Image.fromarray(
-            EffectFilter.cartoon(self.current_image)
-        )
+        self.current_image = Image.fromarray(EffectFilter.cartoon(self.current_image))
         self.display_image()
 
     """
@@ -479,7 +502,7 @@ class ImageEditor(QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def undo_action(self):
         self.reset_slider_value()
-        self.undo_button.setEnabled(True)
+        self.undo_button.setEnabled(False)
         self.current_image = self.previous_image
         self.display_image()
 
@@ -489,6 +512,16 @@ class ImageEditor(QMainWindow, Ui_MainWindow):
         self.original_image_button.setEnabled(True)
         self.current_image = self.original_image
         self.display_image()
+
+    @pyqtSlot()
+    def show_author_info(self):
+        QMessageBox.about(
+            self,
+            "About Author",
+            "Người hướng dẫn:  Phạm Nguyễn Minh Nhựt \n\n"
+            "Người thực hiện:   Dương Lê Hà - 19IT1 \n"
+            "                   Nguyễn Duy Phúc - 19IT4",
+        )
 
 
 if __name__ == "__main__":

@@ -345,7 +345,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuExit.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.stackedWidget.setCurrentIndex(0)
+        self.stackedWidget.setCurrentIndex(2)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -379,7 +379,7 @@ class Ui_MainWindow(object):
         self.rotate_group_box.setTitle(_translate("MainWindow", "Rotate Image"))
         self.rotate_left_button.setText(_translate("MainWindow", "Left 90"))
         self.rotate_right_button.setText(_translate("MainWindow", "Right 90"))
-        self.pushButton.setText(_translate("MainWindow", "PushButton"))
+        self.pushButton.setText(_translate("MainWindow", "Face detector (May error)"))
         self.open_button.setText(_translate("MainWindow", "Open"))
         self.save_button.setText(_translate("MainWindow", "Save"))
         self.prev_page_button.setText(_translate("MainWindow", "Prev"))
